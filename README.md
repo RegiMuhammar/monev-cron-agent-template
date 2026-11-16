@@ -48,6 +48,24 @@ copy .env.example .env
 python -m src.main --dry-run --force
 ```
 
+## Maintenance
+
+Bot berjalan otomatis tanpa laptop hidup, dengan perawatan ringan berikut:
+
+1. **Perbarui `MONEV_STORAGE_STATE` jika sesi kedaluwarsa:**
+   - Jika menerima email `[Monev Bot ERROR]` bertuliskan sesi kedaluwarsa / verifikasi keamanan Cloudflare di `account.kemnaker.go.id`, perbarui cookie sesi dari laptopmu (IP Indonesia) lalu unggah lagi ke GitHub Secret:
+     ```powershell
+     # Opsional: hapus sesi lama jika ingin memaksa login ulang dari awal
+     Remove-Item -ErrorAction SilentlyContinue artifacts\storage_state.json
+
+     .\.venv\Scripts\python.exe -m src.main --dry-run --force
+     Get-Content -Raw artifacts\storage_state.json | gh secret set MONEV_STORAGE_STATE
+     ```
+2. **Aturan 60 hari tanpa commit di GitHub Actions:**
+   - GitHub otomatis menonaktifkan jadwal `cron` jika repository tidak memiliki commit baru selama 60 hari berturut-turut. Jika muncul notifikasi dari GitHub, buka tab **Actions** → **Monev Daily Report Check** → klik **Enable workflow**.
+3. **Diagnosa error:**
+   - Setiap kegagalan di GitHub Actions menyimpan screenshot halaman terakhir ke artifact `monev-debug-artifacts` (tersimpan 7 hari) di halaman run yang gagal.
+
 ## Catatan Penting
 
 - **Pergeseran Jam Cron GitHub:** GitHub Actions cron gratis kadang mundur 5–20 menit di jam sibuk. Kalau ingin eksekusi tepat waktu di menit `:00`, kamu bisa pakai layanan gratis seperti `cron-job.org` untuk men-trigger endpoint `workflow_dispatch` GitHub API.
