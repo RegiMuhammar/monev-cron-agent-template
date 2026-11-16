@@ -1,0 +1,72 @@
+name: Monev Daily Report Check
+
+on:
+  schedule:
+    # 16:00 WIB (09:00 UTC) - Senin s/d Jumat
+    - cron: "0 9 * * 1-5"
+    # 18:00 WIB (11:00 UTC) - Senin s/d Jumat
+    - cron: "0 11 * * 1-5"
+    # 22:00 WIB (15:00 UTC) - Senin s/d Jumat
+    - cron: "0 15 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Test tanpa mengirim email sungguhan (true/false)"
+        required: false
+        default: "false"
+      date:
+        description: "Override tanggal YYYY-MM-DD (kosongkan untuk hari ini WIB)"
+        required: false
+        default: ""
+
+jobs:
+  check-monev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Run Monev checker
+        env:
+          MONEV_EMAIL: ${{ secrets.MONEV_EMAIL }}
+          MONEV_PASSWORD: ${{ secrets.MONEV_PASSWORD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT || '465' }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          HEADLESS: "true"
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            ARGS="--date ${{ github.event.inputs.date }} --force"
+          fi
+          python -m src.main $ARGS
+
+      - name: Upload debug screenshot on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monev-debug-artifacts
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
