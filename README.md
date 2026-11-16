@@ -25,6 +25,10 @@ Berjalan otomatis di cloud menggunakan **GitHub Actions** (laptop tidak perlu hi
    - `MONEV_PASSWORD`: Password akun SIAPkerja / Kemnaker kamu
    - `RESEND_API_KEY`: API key Resend (`re_...`)
    - `NOTIFY_EMAIL`: Email tujuan penerima notifikasi
+   - `MONEV_STORAGE_STATE`: *(Disarankan untuk GitHub Actions)* Isi `artifacts/storage_state.json` hasil login lokal agar server GitHub langsung masuk ke `/dashboard` tanpa memicu verifikasi Cloudflare di `account.kemnaker.go.id`. Bisa diunggah cepat lewat:
+     ```powershell
+     Get-Content -Raw artifacts/storage_state.json | gh secret set MONEV_STORAGE_STATE
+     ```
    - *(Opsional)* `RESEND_FROM`: Alamat pengirim jika pakai domain custom terverifikasi di Resend
    - *(Opsional, alternatif tanpa Resend)* `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_HOST`, `SMTP_PORT`
 4. **Tes Manual Pertama Kali:**

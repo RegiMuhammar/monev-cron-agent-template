@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import json
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -185,6 +187,31 @@ def classify_riwayat_detail_text(page_text: str, date_str: str | None = None) ->
     return None
 
 
+def parse_storage_state(raw: str) -> dict[str, Any]:
+    """Parse MONEV_STORAGE_STATE from raw JSON or base64-encoded JSON."""
+    text = raw.strip()
+    if not text:
+        raise MonevCheckError("MONEV_STORAGE_STATE is empty.")
+
+    candidates = [text]
+    if not text.startswith("{"):
+        try:
+            decoded = base64.b64decode(text, validate=True).decode("utf-8")
+            candidates.insert(0, decoded)
+        except Exception:
+            pass
+
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict) and ("cookies" in parsed or "origins" in parsed):
+                return parsed
+        except Exception:
+            continue
+
+    raise MonevCheckError("Format MONEV_STORAGE_STATE tidak valid (harus JSON Playwright storage_state).")
+
+
 def _first_visible(page: Page, selectors: list[str], timeout_ms: int = 15000) -> Locator:
     """Return the first visible element matching any selector in order."""
     combined = ", ".join(selectors)
@@ -237,6 +264,13 @@ def _perform_sso_login(page: Page, email: str, password: str) -> None:
 
     if page.url.startswith(MONEV_DASHBOARD_URL):
         return
+
+    body_lower = " ".join(page.inner_text("body").lower().split()) if page.locator("body").count() else ""
+    if "verifikasi keamanan" in body_lower or "verifikasi bahwa anda adalah manusia" in body_lower:
+        raise MonevCheckError(
+            "Halaman login account.kemnaker.go.id diblokir oleh verifikasi keamanan Cloudflare. "
+            "Perbarui secret MONEV_STORAGE_STATE dari sesi login lokal yang masih aktif."
+        )
 
     email_input = _first_visible(
         page,
@@ -320,9 +354,13 @@ def check_today_report(config: Config, date_str: str) -> CheckResult:
             "locale": "id-ID",
             "timezone_id": "Asia/Jakarta",
         }
-        has_saved_session = storage_state_path.is_file()
-        if has_saved_session:
+        has_saved_session = False
+        if config.monev_storage_state:
+            context_kwargs["storage_state"] = parse_storage_state(config.monev_storage_state)
+            has_saved_session = True
+        elif storage_state_path.is_file():
             context_kwargs["storage_state"] = str(storage_state_path)
+            has_saved_session = True
 
         context = browser.new_context(**context_kwargs)
         page = context.new_page()

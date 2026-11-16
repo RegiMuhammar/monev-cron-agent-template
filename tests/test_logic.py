@@ -15,6 +15,7 @@ from src.monev_checker import (
     classify_dashboard_text,
     classify_home_payload,
     classify_riwayat_detail_text,
+    parse_storage_state,
 )
 from src.notifier import send_email
 
@@ -142,6 +143,18 @@ class TestMonevLogic(unittest.TestCase):
             self.assertEqual(payload["to"], ["dest@gmail.com"])
             self.assertEqual(payload["subject"], "Subjek Tes")
             self.assertEqual(payload["from"], DEFAULT_RESEND_FROM)
+
+    def test_parse_storage_state_raw_and_base64(self) -> None:
+        import base64
+
+        raw_obj = {"cookies": [{"name": "sid", "value": "abc"}], "origins": []}
+        raw_str = json.dumps(raw_obj)
+        b64_str = base64.b64encode(raw_str.encode("utf-8")).decode("ascii")
+
+        self.assertEqual(parse_storage_state(raw_str), raw_obj)
+        self.assertEqual(parse_storage_state(b64_str), raw_obj)
+        with self.assertRaises(MonevCheckError):
+            parse_storage_state("not-json")
 
     def test_main_sends_email_only_when_empty(self) -> None:
         env = {

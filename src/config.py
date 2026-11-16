@@ -46,6 +46,7 @@ class Config:
     monev_email: str
     monev_password: str
     notify_email: str
+    monev_storage_state: str = ""
     resend_api_key: str = ""
     resend_from: str = DEFAULT_RESEND_FROM
     smtp_host: str = "smtp.gmail.com"
@@ -89,6 +90,7 @@ class Config:
             monev_email=os.environ["MONEV_EMAIL"].strip(),
             monev_password=os.environ["MONEV_PASSWORD"],
             notify_email=os.environ["NOTIFY_EMAIL"].strip(),
+            monev_storage_state=os.getenv("MONEV_STORAGE_STATE", "").strip(),
             resend_api_key=resend_api_key,
             resend_from=os.getenv("RESEND_FROM", DEFAULT_RESEND_FROM).strip() or DEFAULT_RESEND_FROM,
             smtp_host=os.getenv("SMTP_HOST", "smtp.gmail.com").strip() or "smtp.gmail.com",

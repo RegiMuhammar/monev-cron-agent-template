@@ -46,6 +46,7 @@ jobs:
         env:
           MONEV_EMAIL: ${{ secrets.MONEV_EMAIL }}
           MONEV_PASSWORD: ${{ secrets.MONEV_PASSWORD }}
+          MONEV_STORAGE_STATE: ${{ secrets.MONEV_STORAGE_STATE }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           RESEND_FROM: ${{ secrets.RESEND_FROM }}
           SMTP_HOST: ${{ secrets.SMTP_HOST || 'smtp.gmail.com' }}
