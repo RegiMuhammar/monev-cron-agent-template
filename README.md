@@ -17,27 +17,27 @@ Berjalan otomatis di cloud menggunakan **GitHub Actions** (laptop tidak perlu hi
 
 ```mermaid
 flowchart TD
-    A["GitHub Actions Cron (16:00, 18:00, 22:00 WIB / Sen-Jum)"] --> B["Hitung tanggal hari ini WIB (YYYY-MM-DD)"]
-    B --> C{"Hari kerja (Sen-Jum)?"}
-    C -- "Tidak" --> Z1["Skip (Exit 0)"]
-    C -- "Ya" --> D{"Ada MONEV_STORAGE_STATE / cookie lokal?"}
-    D -- "Ya" --> E["Buka /dashboard + reload & tunggu maks 10 detik"]
-    E --> F{"Berhasil masuk /dashboard?"}
-    D -- "Tidak" --> G["Buka /login -> redirect SSO account.kemnaker.go.id"]
-    F -- "Tidak" --> G
-    F -- "Ya" --> H["Ambil status /api/v1/users/me/home"]
+    A["GitHub Actions Cron 16:00, 18:00, 22:00 WIB"] --> B["Ambil tanggal hari ini WIB"]
+    B --> C{"Hari kerja Sen-Jum?"}
+    C -->|Tidak| Z1["Skip dan Exit 0"]
+    C -->|Ya| D{"Ada MONEV_STORAGE_STATE atau cookie lokal?"}
+    D -->|Ya| E["Buka dashboard, reload dan tunggu maks 10 detik"]
+    E --> F{"Berhasil masuk dashboard?"}
+    D -->|Tidak| G["Buka halaman login dan redirect SSO"]
+    F -->|Tidak| G
+    F -->|Ya| H["Ambil status API users me home"]
     G --> G1{"Ada verifikasi Cloudflare?"}
-    G1 -- "Ya" --> ERR["Error + Screenshot Artifact"]
-    G1 -- "Tidak" --> G2["Isi email & password -> masuk /dashboard"]
+    G1 -->|Ya| ERR["Catat Error dan Screenshot Artifact"]
+    G1 -->|Tidak| G2["Isi email dan password lalu masuk dashboard"]
     G2 --> H
     H --> I{"Data API valid untuk hari ini?"}
-    I -- "Tidak / Fallback" --> J["Cek DOM /dashboard & /dashboard/riwayat?date=YYYY-MM-DD&view=detail"]
-    I -- "Ya" --> K{"Status Laporan"}
+    I -->|Tidak| J["Cek DOM dashboard dan riwayat tanggal hari ini"]
+    I -->|Ya| K{"Status Laporan"}
     J --> K
-    K -- "FILLED / OFF_DAY (Libur)" --> Z2["Diam (Tidak kirim email, Exit 0)"]
-    K -- "EMPTY (Belum diisi)" --> L["Kirim Email Reminder via Resend"]
-    K -- "Gagal parsing / Timeout" --> ERR
-    ERR --> M["Kirim Email Alert Error via Resend (Exit 1)"]
+    K -->|FILLED atau OFF_DAY| Z2["Diam tanpa email dan Exit 0"]
+    K -->|EMPTY| L["Kirim Email Reminder via Resend"]
+    K -->|Gagal parsing atau Timeout| ERR
+    ERR --> M["Kirim Email Alert Error via Resend dan Exit 1"]
 ```
 
 ## Setup di GitHub (Gratis, Tanpa Laptop Hidup)
