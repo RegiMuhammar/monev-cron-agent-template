@@ -13,6 +13,33 @@ Berjalan otomatis di cloud menggunakan **GitHub Actions** (laptop tidak perlu hi
    - **Belum diisi:** Kirim email pengingat dengan tautan langsung ke halaman pengisian hari itu.
    - **Terjadi Error (gagal login, web down, struktur berubah):** Kirim email alert error + simpan screenshot ke GitHub Actions Artifacts.
 
+## Flow Sistem
+
+```mermaid
+flowchart TD
+    A["GitHub Actions Cron (16:00, 18:00, 22:00 WIB / Sen-Jum)"] --> B["Hitung tanggal hari ini WIB (YYYY-MM-DD)"]
+    B --> C{"Hari kerja (Sen-Jum)?"}
+    C -- "Tidak" --> Z1["Skip (Exit 0)"]
+    C -- "Ya" --> D{"Ada MONEV_STORAGE_STATE / cookie lokal?"}
+    D -- "Ya" --> E["Buka /dashboard + reload & tunggu maks 10 detik"]
+    E --> F{"Berhasil masuk /dashboard?"}
+    D -- "Tidak" --> G["Buka /login -> redirect SSO account.kemnaker.go.id"]
+    F -- "Tidak" --> G
+    F -- "Ya" --> H["Ambil status /api/v1/users/me/home"]
+    G --> G1{"Ada verifikasi Cloudflare?"}
+    G1 -- "Ya" --> ERR["Error + Screenshot Artifact"]
+    G1 -- "Tidak" --> G2["Isi email & password -> masuk /dashboard"]
+    G2 --> H
+    H --> I{"Data API valid untuk hari ini?"}
+    I -- "Tidak / Fallback" --> J["Cek DOM /dashboard & /dashboard/riwayat?date=YYYY-MM-DD&view=detail"]
+    I -- "Ya" --> K{"Status Laporan"}
+    J --> K
+    K -- "FILLED / OFF_DAY (Libur)" --> Z2["Diam (Tidak kirim email, Exit 0)"]
+    K -- "EMPTY (Belum diisi)" --> L["Kirim Email Reminder via Resend"]
+    K -- "Gagal parsing / Timeout" --> ERR
+    ERR --> M["Kirim Email Alert Error via Resend (Exit 1)"]
+```
+
 ## Setup di GitHub (Gratis, Tanpa Laptop Hidup)
 
 1. **Buat repository GitHub baru bertipe `Private`** lalu push folder ini ke repo tersebut.
