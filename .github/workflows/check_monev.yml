@@ -23,6 +23,9 @@ jobs:
   check-monev:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: check-monev
+      cancel-in-progress: false
 
     steps:
       - name: Checkout repository
@@ -63,11 +66,27 @@ jobs:
           fi
           python -m src.main $ARGS
 
+      - name: Persist rotated MONEV_STORAGE_STATE secret
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_SECRETS_TOKEN }}
+        run: |
+          if [ ! -f artifacts/storage_state.json ]; then
+            echo "artifacts/storage_state.json tidak ditemukan; secret MONEV_STORAGE_STATE tidak diubah."
+            exit 0
+          fi
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::Secret GH_SECRETS_TOKEN belum diset, sehingga rotasi MONEV_STORAGE_STATE tidak bisa disimpan otomatis."
+            exit 0
+          fi
+          gh secret set MONEV_STORAGE_STATE --repo "${{ github.repository }}" < artifacts/storage_state.json
+          echo "Berhasil memperbarui secret MONEV_STORAGE_STATE dengan sesi terbaru."
+
       - name: Upload debug screenshot on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: monev-debug-artifacts
-          path: artifacts/
+          path: artifacts/*.png
           if-no-files-found: ignore
           retention-days: 7

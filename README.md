@@ -44,6 +44,7 @@ flowchart LR
      ```powershell
      Get-Content -Raw artifacts/storage_state.json | gh secret set MONEV_STORAGE_STATE
      ```
+   - `GH_SECRETS_TOKEN`: *(Wajib agar sesi terus aktif otomatis)* GitHub Fine-grained Personal Access Token khusus repo ini dengan izin **Secrets: Read and write**, dipakai workflow untuk menyimpan kembali `MONEV_STORAGE_STATE` baru tiap kali `monev_refresh_token` dirotasi oleh server.
    - *(Opsional)* `RESEND_FROM`: Alamat pengirim jika pakai domain custom terverifikasi di Resend
    - *(Opsional, alternatif tanpa Resend)* `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_HOST`, `SMTP_PORT`
 4. **Tes Manual Pertama Kali:**
