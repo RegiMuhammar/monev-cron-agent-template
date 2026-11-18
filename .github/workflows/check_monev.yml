@@ -1,13 +1,6 @@
 name: Monev Daily Report Check
 
 on:
-  schedule:
-    # 16:00 WIB (09:00 UTC) - Senin s/d Jumat
-    - cron: "0 9 * * 1-5"
-    # 18:00 WIB (11:00 UTC) - Senin s/d Jumat
-    - cron: "0 11 * * 1-5"
-    # 22:00 WIB (15:00 UTC) - Senin s/d Jumat
-    - cron: "0 15 * * 1-5"
   workflow_dispatch:
     inputs:
       dry_run:
